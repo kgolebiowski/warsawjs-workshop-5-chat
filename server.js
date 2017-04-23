@@ -1,4 +1,4 @@
-'use strict'; // Używać w nodejs bo nie działa ES6; Nie pozwala na używanie niezadeklarowanych zmiennych itp
+'use strict';
 
 const io = require("socket.io")();
 
@@ -44,12 +44,13 @@ io.on('connection', (client) => {
                     }
                 } else if (data.line.startsWith(CMD_KICK) && clients[clientIndex].isLoggedIn()) {
                     let userName = data.line.substring(CMD_KICK.length + 1, data.line.length);
-                    let found = clients.find(function (client) {
-                        return client.getUserName() === userName;
+                    let found = clients.find(function (fClient) {
+                        return fClient.getUserName() === userName;
                     });
+
                     if (found !== undefined) {
                         io.emit('broadcastMessage', `** User '${found.getUserName()}' has been kicked by '${clients[clientIndex].getUserName()}'`);
-                        client.disconnect(true);
+                        found.getClient().disconnect(true);
                     } else
                         client.emit('broadcastMessage', `** User '${data.line}' is not online...`);
                 } else {
@@ -60,8 +61,8 @@ io.on('connection', (client) => {
                 io.emit('broadcastMessage', `${clients[clientIndex].getUserName()} (${prefix}) > ${data.line}`);
             }
         } catch (ex) {
-            console.log(`Client ${clients[clientIndex].getUserName()} is doing something nasty, disconnecting`);
-            client.disconnect();
+            console.log(`Client ${clients[clientIndex].getUserName()} is doing something nasty, disconnecting...`);
+            clients[clientIndex].getClient().disconnect();
         }
     });
 

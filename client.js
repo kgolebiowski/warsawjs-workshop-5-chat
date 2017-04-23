@@ -8,22 +8,12 @@ const readline = require('readline').createInterface({
     output: process.stdout
 });
 
-readline.question('What is your name? ', (answer) => {
-    socket.emit('msg', {
-        cmd: "name",
-        data: answer
-    });
-});
-
 socket.on('broadcastMessage', data => {
     console.log(`${data}`);
 });
 
 readline.on('line', line => {
-    socket.emit('msg', {
-        cmd: "msg",
-        data: line
-    });
+    socket.emit('msg', line);
 });
 
 readline.prompt();

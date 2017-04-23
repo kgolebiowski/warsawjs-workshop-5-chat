@@ -18,6 +18,10 @@ socket.on('broadcastMessage', data => {
     consoleOut(data);
 });
 
+socket.on('disconnect', function () {
+    process.exit();
+});
+
 readline.on('line', line => {
     if(line === "/break") { // For debugging only !
         token = "asdf";

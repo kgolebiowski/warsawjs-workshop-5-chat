@@ -1,7 +1,10 @@
 'use strict'; // Używać w nodejs bo nie działa ES6; Nie pozwala na używanie niezadeklarowanych zmiennych itp
 
 const io = require("socket.io")();
+
 const ChatClient = require("./ChatClient");
+
+const tokenGenerator = require("./tokenGenerator");
 
 const CMD_LOGIN = '/login';
 const CMD_USERS = '/list';
@@ -12,37 +15,54 @@ let clients = [];
 
 io.on('connection', (client) => {
     let chatClient = new ChatClient(client);
-    let clientIndex = clients.push(chatClient)-1;
+    let clientIndex = clients.push(chatClient) - 1;
     io.emit('broadcastMessage', `** Client '${clients[clientIndex].getUserName()}' joined chat!`);
 
     client.on('msg', data => {
-        if (data.startsWith('/')) {
-            if (data.startsWith(CMD_LOGIN)) {
-                let newName = data.substring(CMD_LOGIN.length + 1, data.length);
-                io.emit('broadcastMessage', `User '${clients[clientIndex].getUserName()}' renamed to '${newName}'`);
-                clients[clientIndex].setUserName(newName);
-            } else if(data.startsWith(CMD_USERS)) {
-                io.emit('broadcastMessage', '** Users: ');
-                for(let user of clients) {
-                    io.emit('broadcastMessage', `- ${user.getUserName()}`);
+        try {
+            if(data.token !== "") {
+                console.log(`Validating token for user '${clients[clientIndex].getUserName()}'`);
+                clients[clientIndex].validateToken(data.token);
+            } else
+                console.log(`Skipping token validation for user '${clients[clientIndex].getUserName()}'`);
+
+            if (data.line.startsWith('/')) {
+                if (data.line.startsWith(CMD_LOGIN)) {
+                    let loginData = data.line.substring(CMD_LOGIN.length + 1, data.line.length).split(" ");
+                    if (clients[clientIndex].authenticate(loginData[0], loginData[1])) {
+                        io.emit('broadcastMessage', `** User '${clients[clientIndex].getUserName()}' renamed to '${loginData[0]}'`);
+                        clients[clientIndex].setUserName(loginData[0]);
+                        client.emit('loggedIn', tokenGenerator.generateJwt(chatClient));
+                    } else
+                        client.emit('broadcastMessage', `** Wrong password!`);
+                } else if (data.line.startsWith(CMD_DISCONNECT)) {
+                    client.disconnect(true);
+                } else if (data.line.startsWith(CMD_USERS) && clients[clientIndex].isLoggedIn()) {
+                    io.emit('broadcastMessage', '** Users: ');
+                    for (let user of clients) {
+                        io.emit('broadcastMessage', `- ${user.getUserName()}`);
+                    }
+                } else if (data.line.startsWith(CMD_KICK) && clients[clientIndex].isLoggedIn()) {
+                    let userName = data.line.substring(CMD_KICK.length + 1, data.line.length);
+                    let found = clients.find(function (client) {
+                        return client.getUserName() === userName;
+                    });
+                    if (found !== undefined) {
+                        io.emit('broadcastMessage', `** User '${found.getUserName()}' has been kicked by '${clients[clientIndex].getUserName()}'`);
+                        client.disconnect(true);
+                    } else
+                        client.emit('broadcastMessage', `** User '${data.line}' is not online...`);
+                } else {
+                    client.emit('broadcastMessage', `Unknown command '${data.line}' or user not permitted...'`);
                 }
-            } else if(data.startsWith(CMD_KICK)) {
-                let userName = data.substring(CMD_KICK.length + 1, data.length);
-                let found = clients.find(function (client) {
-                    return client.getUserName() === userName;
-                });
-                if(found !== undefined) {
-                    io.emit('broadcastMessage', `** User '${found.getUserName()}' has been kicked by '${clients[clientIndex].getUserName()}'`);
-                    client.disconnect();
-                } else
-                    client.emit('broadcastMessage', `User '${data}' is not online...`);
-            } else if(data.startsWith(CMD_DISCONNECT)) {
-                io.emit('broadcastMessage', '** TODO !!!');
             } else {
-                client.emit('broadcastMessage', `Unknown command '${data}'`);
+                const prefix = clients[clientIndex].isLoggedIn() ? "logged" : "anonym";
+                io.emit('broadcastMessage', `${clients[clientIndex].getUserName()} (${prefix}) > ${data.line}`);
             }
-        } else
-            io.emit('broadcastMessage', `${clients[clientIndex].getUserName()} >>> ${data}`);
+        } catch (ex) {
+            console.log(`Client ${clients[clientIndex].getUserName()} is doing something nasty, disconnecting`);
+            client.disconnect();
+        }
     });
 
     client.on('disconnect', function () {

@@ -16,6 +16,10 @@ class ChatClient {
         return this.userName;
     }
 
+    getClient() {
+        return this.clientObj;
+    }
+
     authenticate(name, password) {
         this.loggedIn = true;
         return password === "test";

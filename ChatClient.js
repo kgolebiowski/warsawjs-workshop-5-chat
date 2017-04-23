@@ -1,7 +1,11 @@
+const jwt = require('jwt-simple');
+const secret = "testsecret";
+
 class ChatClient {
     constructor(clientObj) {
         this.clientObj = clientObj;
         this.userName = clientObj.id;
+        this.loggedIn = false;
     }
 
     setUserName(name) {
@@ -13,7 +17,17 @@ class ChatClient {
     }
 
     authenticate(name, password) {
+        this.loggedIn = true;
         return password === "test";
+    }
+
+    validateToken(token) {
+        jwt.decode(token, secret);
+
+    }
+
+    isLoggedIn() {
+        return this.loggedIn;
     }
 }
 

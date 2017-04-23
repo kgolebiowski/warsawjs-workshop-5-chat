@@ -11,6 +11,10 @@ class ChatClient {
     getUserName() {
         return this.userName;
     }
+
+    authenticate(name, password) {
+        return password === "test";
+    }
 }
 
 module.exports = ChatClient;

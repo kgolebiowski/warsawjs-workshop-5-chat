@@ -9,7 +9,7 @@ const readline = require('readline').createInterface({
 });
 
 socket.on('broadcastMessage', data => {
-    console.log(`${data}`);
+    consoleOut(data);
 });
 
 readline.on('line', line => {
@@ -17,3 +17,10 @@ readline.on('line', line => {
 });
 
 readline.prompt();
+
+function consoleOut(msg) {
+    process.stdout.clearLine();
+    process.stdout.cursorTo(0);
+    console.log(msg);
+    readline.prompt(true);
+}

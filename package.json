@@ -1,0 +1,21 @@
+{
+  "name": "workshop-chat",
+  "version": "1.0.0",
+  "description": "",
+  "main": "client.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "chat",
+    "nodejs",
+    "socket",
+    "io"
+  ],
+  "author": "KGolebiowski",
+  "license": "ISC",
+  "dependencies": {
+    "socket.io": "^1.7.3",
+    "socket.io-client": "^1.7.3"
+  }
+}

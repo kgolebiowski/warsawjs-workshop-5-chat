@@ -8,12 +8,26 @@ const readline = require('readline').createInterface({
     output: process.stdout
 });
 
+let token = "";
+
+socket.on('loggedIn', data => {
+    token = data;
+});
+
 socket.on('broadcastMessage', data => {
     consoleOut(data);
 });
 
 readline.on('line', line => {
-    socket.emit('msg', line);
+    if(line === "/break") { // For debugging only !
+        token = "asdf";
+        return;
+    }
+
+    socket.emit('msg', {
+        token: token,
+        line: line
+    });
 });
 
 readline.prompt();

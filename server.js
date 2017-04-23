@@ -5,6 +5,8 @@ const ChatClient = require("./ChatClient");
 
 const CMD_LOGIN = '/login';
 const CMD_USERS = '/list';
+const CMD_KICK = '/kick';
+const CMD_DISCONNECT = '/disco';
 
 let clients = [];
 
@@ -24,6 +26,18 @@ io.on('connection', (client) => {
                 for(let user of clients) {
                     io.emit('broadcastMessage', `- ${user.getUserName()}`);
                 }
+            } else if(data.startsWith(CMD_KICK)) {
+                let userName = data.substring(CMD_KICK.length + 1, data.length);
+                let found = clients.find(function (client) {
+                    return client.getUserName() === userName;
+                });
+                if(found !== undefined) {
+                    io.emit('broadcastMessage', `** User '${found.getUserName()}' has been kicked by '${clients[clientIndex].getUserName()}'`);
+                    client.disconnect();
+                } else
+                    client.emit('broadcastMessage', `User '${data}' is not online...`);
+            } else if(data.startsWith(CMD_DISCONNECT)) {
+                io.emit('broadcastMessage', '** TODO !!!');
             } else {
                 client.emit('broadcastMessage', `Unknown command '${data}'`);
             }
